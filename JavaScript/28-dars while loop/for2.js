@@ -14,13 +14,27 @@
 //     }
 // }
 
+//! for-9
+let a = 1;
+let b = 10;
+let s = 0;
 
-let a = 3;
-let n = 11;
-let k = 1;
-
-for (let i = 1; i <= n; i++) {
-    k *= a;
+for(let i = a; i <= b; i++) {
+    s = s + i * i; 
 }
-console.log(k);
+console.log(s);
+
+
+
+//! for-15
+// let a = 3;
+// let n = 11;
+// let k = 1;
+
+// for (let i = 1; i <= n; i++) {
+//     k *= a;
+// }
+// console.log(k);
+
+
 
