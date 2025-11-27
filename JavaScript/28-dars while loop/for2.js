@@ -14,15 +14,15 @@
 //     }
 // }
 
-//! for-9
-let a = 1;
-let b = 10;
-let s = 0;
+// //! for-9
+// let a = 1;
+// let b = 10;
+// let s = 0;
 
-for(let i = a; i <= b; i++) {
-    s = s + i * i; 
-}
-console.log(s);
+// for(let i = a; i <= b; i++) {
+//     s = s + i * i; 
+// }
+// console.log(s);
 
 
 

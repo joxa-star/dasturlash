@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦖 Dino O'yini - Avtopilot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #87CEEB, #E0F6FF);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .stats {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 30px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .score { color: #3B82F6; }
+        .speed { color: #10B981; }
+        .mode { color: #8B5CF6; }
+        .mode.manual { color: #F97316; }
+        
+        #gameCanvas {
+            background: linear-gradient(to bottom, #E0F6FF, #FEF3C7);
+            border: 5px solid #4B5563;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .start-btn {
+            background: #10B981;
+            color: white;
+        }
+        
+        .start-btn:hover {
+            background: #059669;
+        }
+        
+        .stop-btn {
+            background: #EF4444;
+            color: white;
+        }
+        
+        .stop-btn:hover {
+            background: #DC2626;
+        }
+        
+        .autopilot-btn {
+            background: #8B5CF6;
+            color: white;
+        }
+        
+        .autopilot-btn:hover {
+            background: #7C3AED;
+        }
+        
+        .autopilot-btn.manual {
+            background: #F97316;
+        }
+        
+        .autopilot-btn.manual:hover {
+            background: #EA580C;
+        }
+        
+        .info {
+            margin-top: 20px;
+            text-align: center;
+            color: #666;
+            max-width: 500px;
+        }
+        
+        .info p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🦖 Dino O'yini</h1>
+    <p class="subtitle">Avtopilot bilan dinozavr o'yini</p>
+    
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-label">Ball</div>
+            <div class="stat-value score" id="scoreDisplay">0</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Tezlik</div>
+            <div class="stat-value speed" id="speedDisplay">5.0x</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Rejim</div>
+            <div class="stat-value mode" id="modeDisplay">🤖 Avto</div>
+        </div>
+    </div>
+    
+    <canvas id="gameCanvas" width="800" height="300"></canvas>
+    
+    <div class="controls">
+        <button class="start-btn" id="startBtn" onclick="startGame()">▶️ Boshlash</button>
+        <button class="stop-btn" id="stopBtn" onclick="stopGame()" style="display:none;">⏸️ To'xtatish</button>
+        <button class="autopilot-btn" id="autopilotBtn" onclick="toggleAutopilot()">🤖 Avtopilot: ON</button>
+    </div>
+    
+    <div class="info">
+        <p id="infoText">🤖 Avtopilot rejimi: Dinozavr o'zi sakraydi va daraxtlarga urmaydi.</p>
+        <p>📈 Har 10 ballda tezlik oshadi!</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // O'yin o'zgaruvchilari
+        let gameStarted = false;
+        let gameOver = false;
+        let autoPilot = true;
+        let score = 0;
+        let gameSpeed = 5;
+        let animationId;
+        
+        // Dino o'zgaruvchilari
+        const DINO_WIDTH = 40;
+        const DINO_HEIGHT = 50;
+        const DINO_X = 100;
+        const GROUND_HEIGHT = 250;
+        let dinoY = 0;
+        let dinoVelocity = 0;
+        let isJumping = false;
+        
+        // Fizika
+        const JUMP_FORCE = -15;
+        const GRAVITY = 0.8;
+        
+        // To'siqlar
+        const OBSTACLE_WIDTH = 30;
+        const MIN_GAP = 200;
+        const MAX_GAP = 400;
+        let obstacles = [];
+        
+        // Tugmalarni yangilash
+        function updateButtons() {
+            document.getElementById('startBtn').style.display = gameStarted ? 'none' : 'inline-block';
+            document.getElementById('stopBtn').style.display = gameStarted ? 'inline-block' : 'none';
+        }
+        
+        function updateStats() {
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('speedDisplay').textContent = gameSpeed.toFixed(1) + 'x';
+            const modeDisplay = document.getElementById('modeDisplay');
+            modeDisplay.textContent = autoPilot ? '🤖 Avto' : '🎮 Qo\'l';
+            modeDisplay.className = 'stat-value mode' + (autoPilot ? '' : ' manual');
+        }
+        
+        function toggleAutopilot() {
+            autoPilot = !autoPilot;
+            const btn = document.getElementById('autopilotBtn');
+            btn.textContent = autoPilot ? '🤖 Avtopilot: ON' : '🎮 Qo\'lda: OFF';
+            btn.className = 'autopilot-btn' + (autoPilot ? '' : ' manual');
+            
+            document.getElementById('infoText').textContent = autoPilot 
+                ? '🤖 Avtopilot rejimi: Dinozavr o\'zi sakraydi va daraxtlarga urmaydi.'
+                : '🎮 Qo\'lda rejim: SPACE tugmasini bosib sakrang! Daraxtga urmaslikka harakat qiling.';
+            
+            updateStats();
+        }
+        
+        function startGame() {
+            gameStarted = true;
+            gameOver = false;
+            score = 0;
+            gameSpeed = 5;
+            dinoY = 0;
+            dinoVelocity = 0;
+            isJumping = false;
+            obstacles = [];
+            updateButtons();
+            updateStats();
+            gameLoop();
+        }
+        
+        function stopGame() {
+            gameStarted = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            updateButtons();
+        }
+        
+        // Klaviatura hodisalari
+        document.addEventListener('keydown', (e) => {
+            if (!autoPilot && gameStarted && !gameOver && (e.code === 'Space' || e.key === ' ') && dinoY === 0) {
+                dinoVelocity = JUMP_FORCE;
+                isJumping = true;
+                e.preventDefault();
+            }
+        });
+        
+        // Dinozavrni chizish
+        function drawDino() {
+            const x = DINO_X;
+            const y = GROUND_HEIGHT - dinoY - DINO_HEIGHT;
+            
+            // Tana
+            ctx.fillStyle = '#10B981';
+            ctx.fillRect(x + 12, y + 22, 16, 28);
+            
+            // Bosh
+            ctx.fillRect(x + 5, y + 10, 20, 15);
+            
+            // Ko'z
+            ctx.fillStyle = 'white';
+            ctx.fillRect(x + 8, y + 12, 4, 4);
+            
+            // Oyoqlar
+            ctx.fillStyle = '#059669';
+            if (!isJumping && gameStarted) {
+                const legOffset = Math.floor(Date.now() / 100) % 2 === 0 ? 0 : 2;
+                ctx.fillRect(x + 14 + legOffset, y + 48, 4, 8);
+                ctx.fillRect(x + 22 - legOffset, y + 48, 4, 8);
+            } else {
+                ctx.fillRect(x + 14, y + 48, 4, 8);
+                ctx.fillRect(x + 22, y + 48, 4, 8);
+            }
+            
+            // Dum
+            ctx.fillStyle = '#10B981';
+            ctx.fillRect(x + 28, y + 28, 8, 6);
+        }
+        
+        // To'siqni chizish
+        function drawObstacle(obs) {
+            const x = obs.x;
+            const y = GROUND_HEIGHT - obs.height;
+            
+            // Daraxt tanasi
+            ctx.fillStyle = '#166534';
+            ctx.fillRect(x + 8, y, 14, obs.height);
+            
+            // Daraxt barglari
+            ctx.fillStyle = '#10B981';
+            ctx.beginPath();
+            ctx.arc(x + 15, y - 5, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#22C55E';
+            ctx.beginPath();
+            ctx.arc(x + 15, y - 10, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Bulutlarni chizish
+        function drawClouds() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            const offset = (Date.now() / 50) % 800;
+            
+            ctx.beginPath();
+            ctx.arc(200 - offset, 50, 20, 0, Math.PI * 2);
+            ctx.arc(220 - offset, 50, 25, 0, Math.PI * 2);
+            ctx.arc(240 - offset, 50, 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(600 - offset, 80, 15, 0, Math.PI * 2);
+            ctx.arc(615 - offset, 80, 20, 0, Math.PI * 2);
+            ctx.arc(630 - offset, 80, 15, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Yerni chizish
+        function drawGround() {
+            ctx.fillStyle = '#4B5563';
+            ctx.fillRect(0, GROUND_HEIGHT, canvas.width, 2);
+            ctx.fillStyle = '#6B7280';
+            ctx.fillRect(0, GROUND_HEIGHT + 2, canvas.width, 3);
+        }
+        
+        // To'qnashuvni tekshirish
+        function checkCollision(obs) {
+            const dinoBottom = GROUND_HEIGHT - dinoY;
+            const dinoTop = dinoBottom - DINO_HEIGHT;
+            const dinoLeft = DINO_X;
+            const dinoRight = DINO_X + DINO_WIDTH;
+            
+            const obsLeft = obs.x;
+            const obsRight = obs.x + OBSTACLE_WIDTH;
+            const obsTop = GROUND_HEIGHT - obs.height;
+            
+            return (
+                dinoRight > obsLeft + 5 &&
+                dinoLeft < obsRight - 5 &&
+                dinoBottom > obsTop + 5
+            );
+        }
+        
+        // Asosiy o'yin sikli
+        function gameLoop() {
+            if (!gameStarted) return;
+            
+            // Ekranni tozalash
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Bulutlarni chizish
+            drawClouds();
+            
+            // Yerni chizish
+            drawGround();
+            
+            // Dino fizikasi
+            if (dinoY > 0 || dinoVelocity !== 0) {
+                dinoVelocity += GRAVITY;
+                dinoY -= dinoVelocity;
+                
+                if (dinoY <= 0) {
+                    dinoY = 0;
+                    dinoVelocity = 0;
+                    isJumping = false;
+                }
+            }
+            
+            // Dinozavrni chizish
+            drawDino();
+            
+            // To'siqlarni yangilash
+            obstacles = obstacles.map(obs => ({
+                ...obs,
+                x: obs.x - gameSpeed
+            })).filter(obs => obs.x > -OBSTACLE_WIDTH);
+            
+            // Yangi to'siq qo'shish
+            if (obstacles.length === 0 || obstacles[obstacles.length - 1].x < canvas.width - MIN_GAP) {
+                const lastX = obstacles.length > 0 ? obstacles[obstacles.length - 1].x : canvas.width;
+                const gap = MIN_GAP + Math.random() * (MAX_GAP - MIN_GAP);
+                
+                if (canvas.width - lastX >= gap || obstacles.length === 0) {
+                    const height = 30 + Math.random() * 40;
+                    obstacles.push({ x: canvas.width, height, passed: false });
+                }
+            }
+            
+            // Avtopilot
+            if (autoPilot) {
+                const nearestObs = obstacles.find(obs => obs.x > DINO_X - 20);
+                if (nearestObs && nearestObs.x < DINO_X + 150 && nearestObs.x > DINO_X - 20 && dinoY === 0) {
+                    dinoVelocity = JUMP_FORCE;
+                    isJumping = true;
+                }
+            } else {
+                // To'qnashuvni tekshirish
+                for (let obs of obstacles) {
+                    if (checkCollision(obs)) {
+                        gameOver = true;
+                        gameStarted = false;
+                        updateButtons();
+                        
+                        // O'yin tugadi xabari
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = 'white';
+                        ctx.font = 'bold 40px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('💥 O\'yin Tugadi!', canvas.width / 2, canvas.height / 2 - 20);
+                        ctx.font = '30px Arial';
+                        ctx.fillText('Sizning ballingiz: ' + score, canvas.width / 2, canvas.height / 2 + 30);
+                        return;
+                    }
+                }
+            }
+            
+            // To'siqlarni chizish va ballni hisoblash
+            obstacles.forEach(obs => {
+                drawObstacle(obs);
+                if (!obs.passed && obs.x + OBSTACLE_WIDTH < DINO_X) {
+                    obs.passed = true;
+                    score++;
+                    updateStats();
+                    
+                    if (score % 10 === 0) {
+                        gameSpeed += 0.5;
+                        updateStats();
+                    }
+                }
+            });
+            
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        // Boshlang'ich holatda statsni yangilash
+        updateStats();
+    </script>
+</body>
+</html>
