@@ -2,7 +2,7 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>🦖 Dino O'yini - Avtopilot</title>
     <style>
         * {
@@ -25,22 +25,28 @@
         h1 {
             color: #333;
             margin-bottom: 10px;
-            font-size: 2.5em;
+            font-size: 2em;
+            text-align: center;
         }
         
         .subtitle {
             color: #666;
             margin-bottom: 20px;
+            text-align: center;
         }
         
         .stats {
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             margin-bottom: 20px;
             display: flex;
-            gap: 30px;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
         }
         
         .stat {
@@ -53,7 +59,7 @@
         }
         
         .stat-value {
-            font-size: 2em;
+            font-size: 1.5em;
             font-weight: bold;
             margin-top: 5px;
         }
@@ -69,12 +75,20 @@
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             cursor: pointer;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            touch-action: none;
         }
         
         .controls {
             margin-top: 20px;
             display: flex;
-            gap: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
         }
         
         button {
