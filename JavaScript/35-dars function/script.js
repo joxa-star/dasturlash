@@ -6,7 +6,7 @@
 // }
 // sayHello("Jahongir")
 
-//! masala-1
+//! masala-1 
 //random sonlarni yig'indisini chiqaruvchi funksiya yozing
 // function addTwoNumber(a, b) {
 //     console.log( a + b );
